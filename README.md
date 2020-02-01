@@ -1,6 +1,6 @@
 # Gin-bigcache
 
-An integration between [Gin](https://github.com/gin-gonic/gin) web framework and [BigCache](https://github.com/allegro/bigcache).
+An integration between [Gin](https://github.com/gin-gonic/gin) web framework and [BigCache](https://github.com/allegro/bigcache) cache.
 
 ## What
 
@@ -21,7 +21,7 @@ import (
     "github.com/gin-gonic/gin"
     )
 
-    func main() {
+func main() {
     cache, err := gbcache.New(bigcache.DefaultConfig(time.Minute))
     if err != nil {
         log.Fatalf("Can't create cache!: %s", err.Error())
@@ -37,3 +37,9 @@ import (
 }
 
 ```
+
+## How
+
+Gin-bigcache is a wrapper around bigcache and stores your responses in [gobs](https://golang.org/pkg/encoding/gob/) in a memory.
+
+Package uses bigcache's config, so for better tuning of your cache please refer to [bigcache itself](https://github.com/allegro/bigcache/blob/master/config.go).
