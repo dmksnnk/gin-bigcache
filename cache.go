@@ -50,31 +50,40 @@ func (cache *Cache) fallback(handle gin.HandlerFunc, c *gin.Context, err error, 
 	handle(c)
 }
 
+func (cache *Cache) do(key string, c *gin.Context, handle gin.HandlerFunc) (*cachedResponse, error) {
+	cached, err := cache.storage.get(key)
+	if err == nil {
+		return cached, nil
+	}
+
+	if err != bigcache.ErrEntryNotFound {
+		return nil, err
+	}
+	// If no cache entry found - get new one from respose
+	// replace writer
+	writer := newCachedWriter(cache.storage, c.Writer, key, cache.log)
+	c.Writer = writer
+	handle(c)
+
+	// delete if was aborted
+	if c.IsAborted() {
+		if err := cache.storage.delete(key); err != nil {
+			cache.log.Printf("Can't delete key from storage: %s", err.Error())
+		}
+	}
+	return nil, nil
+
+}
+
 // CachePage caches response from gin handler function
 func (cache *Cache) CachePage(handle gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := url.QueryEscape(c.Request.URL.RequestURI())
-		cached, err := cache.storage.get(key)
 
+		cached, err := cache.do(key, c, handle)
 		if err != nil {
-			if err != bigcache.ErrEntryNotFound {
-				cache.fallback(handle, c, err, "Can't get entry from cache")
-				return
-			}
-			// If no cache entry found - get new one from respose
-			// replace writer
-			writer := newCachedWriter(cache.storage, c.Writer, key, cache.log)
-			c.Writer = writer
-			handle(c)
-
-			// delete if was aborted
-			if c.IsAborted() {
-				if err := cache.storage.delete(key); err != nil {
-					cache.log.Printf("Can't delete key from storage: %s", err.Error())
-				}
-			}
+			cache.fallback(handle, c, err, "Can't get entry from cache")
 			return
-
 		}
 		if _, err := c.Writer.Write(cached.Data); err != nil {
 			cache.fallback(handle, c, err, "Can't write to response writer")
@@ -86,6 +95,48 @@ func (cache *Cache) CachePage(handle gin.HandlerFunc) gin.HandlerFunc {
 				c.Writer.Header().Set(k, v)
 			}
 		}
+	}
+
+}
+
+// CachePageWithoutQuery adds ability to ignore GET query parameters
+func (cache *Cache) CachePageWithoutQuery(handle gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := url.QueryEscape(c.Request.URL.Path)
+
+		cached, err := cache.do(key, c, handle)
+		if err != nil {
+			cache.fallback(handle, c, err, "Can't get entry from cache")
+			return
+		}
+		if _, err := c.Writer.Write(cached.Data); err != nil {
+			cache.fallback(handle, c, err, "Can't write to response writer")
+			return
+		}
+		c.Writer.WriteHeader(cached.Status)
+		for k, vals := range cached.Header {
+			for _, v := range vals {
+				c.Writer.Header().Set(k, v)
+			}
+		}
+	}
+}
+
+// CachePageWithoutQuery returns a page from cache without headers
+func (cache *Cache) CachePageWithoutHeader(handle gin.HandlerFunc) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := url.QueryEscape(c.Request.URL.RequestURI())
+
+		cached, err := cache.do(key, c, handle)
+		if err != nil {
+			cache.fallback(handle, c, err, "Can't get entry from cache")
+			return
+		}
+		if _, err := c.Writer.Write(cached.Data); err != nil {
+			cache.fallback(handle, c, err, "Can't write to response writer")
+			return
+		}
+		c.Writer.WriteHeader(cached.Status)
 	}
 
 }
