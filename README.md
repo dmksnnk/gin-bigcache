@@ -40,6 +40,7 @@ func main() {
 
 ## How
 
-Gin-bigcache is a wrapper around bigcache and stores your responses in [gobs](https://golang.org/pkg/encoding/gob/) in a memory.
+Inspired by [github.com/gin-contrib/cache](https://github.com/gin-contrib/cache) (which doesn't work propely with bigger responses),
+Gin-bigcache is a wrapper around bigcache. It stores your responses in [gobs](https://golang.org/pkg/encoding/gob/) in a memory.
 
-Package uses bigcache's config, so for better tuning of your cache please refer to [bigcache itself](https://github.com/allegro/bigcache/blob/master/config.go).
+Package uses bigcache's config, for better tuning of your cache please refer to [bigcache itself](https://github.com/allegro/bigcache/blob/master/config.go).
