@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Cache stores reference to a storage
 type Cache struct {
 	storage *storage
 	log     bigcache.Logger
@@ -130,7 +131,7 @@ func (cache *Cache) CachePageWithoutQuery(handle gin.HandlerFunc) gin.HandlerFun
 	}
 }
 
-// CachePageWithoutQuery returns a page from cache without headers
+// CachePageWithoutHeader returns a page from cache without headers
 func (cache *Cache) CachePageWithoutHeader(handle gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := url.QueryEscape(c.Request.URL.RequestURI())
