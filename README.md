@@ -1,5 +1,7 @@
 # Gin-bigcache
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/dmksnnk/gin-bigcache)](https://goreportcard.com/report/github.com/dmksnnk/gin-bigcache)
+
 An integration between [Gin](https://github.com/gin-gonic/gin) web framework and [BigCache](https://github.com/allegro/bigcache) cache.
 
 ## What
