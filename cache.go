@@ -31,7 +31,7 @@ func New(cfg bigcache.Config) (*Cache, error) {
 	gob.Register(&cachedResponse{})
 
 	var log bigcache.Logger
-	// if logger logger is provided - use it, othervise use default
+	// if logger is provided - use it, othervise use default
 	if cfg.Logger != nil {
 		log = cfg.Logger
 	} else {
@@ -85,6 +85,10 @@ func (cache *Cache) CachePage(handle gin.HandlerFunc) gin.HandlerFunc {
 			cache.fallback(handle, c, err, "Can't get entry from cache")
 			return
 		}
+		// nothing in cache
+		if cached == nil {
+			return
+		}
 		if _, err := c.Writer.Write(cached.Data); err != nil {
 			cache.fallback(handle, c, err, "Can't write to response writer")
 			return
@@ -109,6 +113,10 @@ func (cache *Cache) CachePageWithoutQuery(handle gin.HandlerFunc) gin.HandlerFun
 			cache.fallback(handle, c, err, "Can't get entry from cache")
 			return
 		}
+		// nothing in cache
+		if cached == nil {
+			return
+		}
 		if _, err := c.Writer.Write(cached.Data); err != nil {
 			cache.fallback(handle, c, err, "Can't write to response writer")
 			return
@@ -130,6 +138,10 @@ func (cache *Cache) CachePageWithoutHeader(handle gin.HandlerFunc) gin.HandlerFu
 		cached, err := cache.do(key, c, handle)
 		if err != nil {
 			cache.fallback(handle, c, err, "Can't get entry from cache")
+			return
+		}
+		// nothing in cache
+		if cached == nil {
 			return
 		}
 		if _, err := c.Writer.Write(cached.Data); err != nil {
